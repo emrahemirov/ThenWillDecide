@@ -2,17 +2,18 @@ using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
 {
-    [SerializeField] private FloatingJoystick joystick;
-    [SerializeField] private GameObject planeGameObject;
 
     [Header("Movement")] 
-    [SerializeField] private float verticalMoveSpeed = 15f;
-    [SerializeField] private float horizontalMoveSpeed = 10f;
-    [SerializeField] private float acceleration = 40f;
+    [SerializeField] private float verticalMoveSpeed = 40f;
+    [SerializeField] private float horizontalMoveSpeed = 30f;
+    [SerializeField] private float acceleration = 100f;
     [SerializeField] private float deceleration = 60f;
     [SerializeField] private float horizontalOffset = 0.5f;
     [SerializeField] private float verticalOffset = 0.5f;
 
+    
+    private FloatingJoystick _joystick;
+    
     private Vector3 _input;
     private Vector3 _currentVelocity;
     private Rigidbody _rb;
@@ -22,10 +23,11 @@ public class PlayerMovement : MonoBehaviour
     private float _minVerticalMovable;
     private float _maxVerticalMovable;
 
-    private void Awake()
+    private void Start()
     {
+        _joystick = FindFirstObjectByType<FloatingJoystick>();
         _rb = GetComponent<Rigidbody>();
-        var planeCollider = planeGameObject.GetComponent<Collider>();
+        var planeCollider = GameObject.FindGameObjectWithTag("Ground").GetComponent<Collider>();
         var playerCollider = GetComponent<Collider>();
 
         var playerHalfWidth = playerCollider.bounds.extents.x;
@@ -53,7 +55,7 @@ public class PlayerMovement : MonoBehaviour
 
     private void SetInputVector()
     {
-        _input = new Vector3(joystick.Horizontal, 0, joystick.Vertical).normalized;
+        _input = new Vector3(_joystick.Horizontal, 0, _joystick.Vertical).normalized;
     }
 
     private void MovePosition()
