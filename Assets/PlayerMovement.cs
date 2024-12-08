@@ -2,26 +2,25 @@ using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
 {
-
-    [Header("Movement")] 
-    [SerializeField] private float verticalMoveSpeed = 40f;
-    [SerializeField] private float horizontalMoveSpeed = 30f;
-    [SerializeField] private float acceleration = 100f;
-    [SerializeField] private float deceleration = 60f;
+    [Header("Movement")] [SerializeField] private float verticalMoveSpeed = 20f;
+    [SerializeField] private float horizontalMoveSpeed = 15f;
+    [SerializeField] private float acceleration = 50f;
+    [SerializeField] private float deceleration = 40f;
     [SerializeField] private float horizontalOffset = 0.5f;
     [SerializeField] private float verticalOffset = 0.5f;
 
-    
+
     private FloatingJoystick _joystick;
-    
+
     private Vector3 _input;
     private Vector3 _currentVelocity;
     private Rigidbody _rb;
 
-    private float _minHorizontalMovable;
-    private float _maxHorizontalMovable;
-    private float _minVerticalMovable;
-    private float _maxVerticalMovable;
+    private float _leftBoundary;
+    private float _rightBoundary;
+    private float _topBoundary;
+    private float _bottomBoundary;
+
 
     private void Start()
     {
@@ -37,19 +36,15 @@ public class PlayerMovement : MonoBehaviour
         var effectiveHorizontalOffset = horizontalOffset + playerHalfWidth;
         var effectiveVerticalOffset = verticalOffset + playerHalfHeight;
 
-        _minHorizontalMovable = planeColliderBounds.min.x + effectiveHorizontalOffset;
-        _maxHorizontalMovable = planeColliderBounds.max.x - effectiveHorizontalOffset;
-        _minVerticalMovable = planeColliderBounds.min.z + effectiveVerticalOffset;
-        _maxVerticalMovable = planeColliderBounds.max.z - effectiveVerticalOffset;
+        _leftBoundary = planeColliderBounds.min.x + effectiveHorizontalOffset;
+        _rightBoundary = planeColliderBounds.max.x - effectiveHorizontalOffset;
+        _topBoundary = planeColliderBounds.min.z + effectiveVerticalOffset;
+        _bottomBoundary = planeColliderBounds.max.z - effectiveVerticalOffset;
     }
 
     private void Update()
     {
         SetInputVector();
-    }
-
-    private void FixedUpdate()
-    {
         MovePosition();
     }
 
@@ -60,23 +55,19 @@ public class PlayerMovement : MonoBehaviour
 
     private void MovePosition()
     {
-        var targetVelocity = new Vector3(
-            _input.x * horizontalMoveSpeed,
-            0,
-            _input.z * verticalMoveSpeed
-        );
+        _currentVelocity = _input.magnitude > 0.1f
+            ? Vector3.MoveTowards(_currentVelocity,
+                new Vector3(_input.x * horizontalMoveSpeed, 0, _input.z * verticalMoveSpeed),
+                acceleration * Time.deltaTime)
+            : Vector3.MoveTowards(_currentVelocity, Vector3.zero, deceleration * Time.deltaTime);
 
-        _currentVelocity = Vector3.MoveTowards(
-            _currentVelocity,
-            targetVelocity,
-            (_input.magnitude > 0 ? acceleration : deceleration) * Time.fixedDeltaTime
-        );
+        _rb.linearVelocity = new Vector3(_currentVelocity.x, _rb.linearVelocity.y, _currentVelocity.z);
 
-        var desiredPosition = transform.position + transform.TransformDirection(_currentVelocity * Time.fixedDeltaTime);
+        var desiredPosition = transform.position + _rb.linearVelocity * Time.deltaTime;
 
-        var clampedX = Mathf.Clamp(desiredPosition.x, _minHorizontalMovable, _maxHorizontalMovable);
-        var clampedZ = Mathf.Clamp(desiredPosition.z, _minVerticalMovable, _maxVerticalMovable);
+        var clampedX = Mathf.Clamp(desiredPosition.x, _leftBoundary, _rightBoundary);
+        var clampedZ = Mathf.Clamp(desiredPosition.z, _topBoundary, _bottomBoundary);
 
-        _rb.MovePosition(new Vector3(clampedX, transform.position.y, clampedZ));
+        _rb.MovePosition(new Vector3(clampedX, _rb.position.y, clampedZ));
     }
 }
