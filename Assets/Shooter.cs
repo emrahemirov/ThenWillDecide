@@ -6,14 +6,16 @@ using Cysharp.Threading.Tasks;
 public class Shooter : MonoBehaviour
 {
     private List<Transform> _hitPoints;
-    [SerializeField] private float bulletSpeed = 50f;
+    [SerializeField] private float bulletSpeed = 20f;
     [SerializeField] private float fireRateBetweenShots = 0.2f;
     [SerializeField] private float fireRateBetweenHitPoints;
 
     private float _nextShootTime;
+    private PlayerMovement _playerMovement;
 
     private void Start()
     {
+        _playerMovement = GetComponentInParent<PlayerMovement>();
         _hitPoints = new List<Transform>();
         foreach (Transform child in transform)
         {
@@ -41,14 +43,18 @@ public class Shooter : MonoBehaviour
         foreach (var hitPoint in _hitPoints)
         {
             var bullet = ObjectPoolManager.Instance.Get(PoolKey.Bullet);
-            bullet.transform.position = hitPoint.position;
             bullet.transform.rotation = hitPoint.rotation;
+            bullet.transform.position = hitPoint.position;
+
             var bulletRigidbody = bullet.GetComponent<Rigidbody>();
 
-            bulletRigidbody.linearVelocity = hitPoint.forward * bulletSpeed;
-            ObjectPoolManager.Instance.ReturnWithDelay(PoolKey.Bullet, bullet, 0.5f).Forget();
+            bulletRigidbody.linearVelocity = _playerMovement.CurrentVelocity.z > 0
+                ? hitPoint.forward * bulletSpeed + _playerMovement.CurrentVelocity
+                : hitPoint.forward * bulletSpeed;
+            ObjectPoolManager.Instance.ReturnWithDelay(PoolKey.Bullet, bullet, 1f).Forget();
 
-            if(fireRateBetweenHitPoints > 0f) await UniTask.Delay(System.TimeSpan.FromSeconds(fireRateBetweenHitPoints));
+            if (fireRateBetweenHitPoints > 0f)
+                await UniTask.Delay(System.TimeSpan.FromSeconds(fireRateBetweenHitPoints));
         }
     }
 }

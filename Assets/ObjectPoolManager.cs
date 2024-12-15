@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
@@ -44,12 +45,11 @@ public class ObjectPoolManager : MonoBehaviour
         foreach (var entry in poolEntries)
         {
             var objectQueue = new Queue<GameObject>();
-            // var keyParent = new GameObject(entry.key.ToString()).transform; 
-            // keyParent.SetParent(transform); 
 
             for (var i = 0; i < entry.poolSize; i++)
             {
                 var obj = Instantiate(entry.prefab, transform);
+                var a = entry.prefab.name;
                 obj.SetActive(false);
                 objectQueue.Enqueue(obj);
             }
@@ -60,43 +60,36 @@ public class ObjectPoolManager : MonoBehaviour
 
     public GameObject Get(PoolKey key)
     {
-        if (_objectPools.ContainsKey(key) && _objectPools[key].Count > 0)
+        GameObject objectToReturn;
+
+        if (_objectPools[key].Count > 0)
         {
-            var obj = _objectPools[key].Dequeue();
-            obj.SetActive(true);
-            return obj;
-        }
-        else if (_objectPools.ContainsKey(key))
-        {
-            Debug.LogWarning($"Pool for '{key}' is empty. Instantiating a new object.");
-            var entry = poolEntries.Find(e => e.key == key);
-            if (entry != null)
-            {
-                // var keyParent = new GameObject(entry.key.ToString()).transform; 
-                // keyParent.SetParent(transform); 
-                var obj = Instantiate(entry.prefab, transform);
-                return obj;
-            }
+            objectToReturn = _objectPools[key].Dequeue();
+            objectToReturn.GetComponent<TrailRenderer>().Clear();
+            objectToReturn.SetActive(true);
+            return objectToReturn;
         }
 
-        Debug.LogError($"No pool found for key: {key}");
-        return null;
+        var entry = poolEntries.Find(e => e.key == key);
+        objectToReturn = Instantiate(entry.prefab, transform);
+        return objectToReturn;
     }
 
-    private void ReturnOrDestroy(PoolKey key, GameObject obj)
+    private void ReturnObjectToPool(PoolKey key, GameObject obj,Action<GameObject> beforeReturn = null)
     {
         obj.SetActive(false);
+        beforeReturn?.Invoke(obj);
         _objectPools[key].Enqueue(obj);
     }
 
     public void Return(PoolKey key, GameObject obj)
     {
-        ReturnOrDestroy(key, obj);
+        ReturnObjectToPool(key, obj);
     }
 
-    public async UniTaskVoid ReturnWithDelay(PoolKey key, GameObject obj, float delay)
+    public async UniTaskVoid ReturnWithDelay(PoolKey key, GameObject obj, float delay,Action<GameObject> beforeReturn = null)
     {
         await UniTask.Delay(System.TimeSpan.FromSeconds(delay));
-        ReturnOrDestroy(key, obj);
+        ReturnObjectToPool(key, obj,beforeReturn);
     }
 }

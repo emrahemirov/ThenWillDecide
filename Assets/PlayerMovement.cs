@@ -1,19 +1,19 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public class PlayerMovement : MonoBehaviour
 {
-    [Header("Movement")] [SerializeField] private float verticalMoveSpeed = 20f;
-    [SerializeField] private float horizontalMoveSpeed = 15f;
+    [SerializeField] private float verticalMoveSpeed = 15f;
+    [SerializeField] private float horizontalMoveSpeed = 10f;
     [SerializeField] private float acceleration = 50f;
     [SerializeField] private float deceleration = 40f;
     [SerializeField] private float horizontalOffset = 0.5f;
-    [SerializeField] private float verticalOffset = 0.5f;
-
+    [SerializeField] private float verticalOffset = 2.5f;
 
     private FloatingJoystick _joystick;
 
     private Vector3 _input;
-    private Vector3 _currentVelocity;
+    public Vector3 CurrentVelocity { get; private set; }
     private Rigidbody _rb;
 
     private float _leftBoundary;
@@ -38,13 +38,17 @@ public class PlayerMovement : MonoBehaviour
 
         _leftBoundary = planeColliderBounds.min.x + effectiveHorizontalOffset;
         _rightBoundary = planeColliderBounds.max.x - effectiveHorizontalOffset;
-        _topBoundary = planeColliderBounds.min.z + effectiveVerticalOffset;
-        _bottomBoundary = planeColliderBounds.max.z - effectiveVerticalOffset;
+        _bottomBoundary = planeColliderBounds.min.z + effectiveVerticalOffset;
+        _topBoundary = planeColliderBounds.max.z - effectiveVerticalOffset;
     }
 
     private void Update()
     {
         SetInputVector();
+    }
+    
+    private void FixedUpdate()
+    {
         MovePosition();
     }
 
@@ -55,18 +59,18 @@ public class PlayerMovement : MonoBehaviour
 
     private void MovePosition()
     {
-        _currentVelocity = _input.magnitude > 0.1f
-            ? Vector3.MoveTowards(_currentVelocity,
+        CurrentVelocity = _input.magnitude > 0.1f
+            ? Vector3.MoveTowards(CurrentVelocity,
                 new Vector3(_input.x * horizontalMoveSpeed, 0, _input.z * verticalMoveSpeed),
-                acceleration * Time.deltaTime)
-            : Vector3.MoveTowards(_currentVelocity, Vector3.zero, deceleration * Time.deltaTime);
+                acceleration * Time.fixedDeltaTime)
+            : Vector3.MoveTowards(CurrentVelocity, Vector3.zero, deceleration * Time.fixedDeltaTime);
+     
+        _rb.linearVelocity = new Vector3(CurrentVelocity.x, _rb.linearVelocity.y, CurrentVelocity.z);
 
-        _rb.linearVelocity = new Vector3(_currentVelocity.x, _rb.linearVelocity.y, _currentVelocity.z);
-
-        var desiredPosition = transform.position + _rb.linearVelocity * Time.deltaTime;
+        var desiredPosition = transform.position + _rb.linearVelocity * Time.fixedDeltaTime;
 
         var clampedX = Mathf.Clamp(desiredPosition.x, _leftBoundary, _rightBoundary);
-        var clampedZ = Mathf.Clamp(desiredPosition.z, _topBoundary, _bottomBoundary);
+        var clampedZ = Mathf.Clamp(desiredPosition.z, _bottomBoundary, _topBoundary);
 
         _rb.MovePosition(new Vector3(clampedX, _rb.position.y, clampedZ));
     }

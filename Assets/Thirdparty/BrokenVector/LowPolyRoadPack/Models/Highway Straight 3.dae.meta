@@ -86,5 +86,6 @@ AssetOrigin:
   productId: 67288
   packageName: Low Poly Road Pack
   packageVersion: 1.3
-  assetPath: Assets/BrokenVector/LowPolyRoadPack/Models/Highway Straight 3.dae
+  assetPath: Assets/Thirdparty/BrokenVector/LowPolyRoadPack/Models/Highway Straight
+    3.dae
   uploadId: 253916
