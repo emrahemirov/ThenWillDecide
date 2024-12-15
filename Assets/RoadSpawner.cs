@@ -1,56 +1,57 @@
 using UnityEngine;
 using System.Collections.Generic;
+using System.Linq;
+using Random = UnityEngine.Random;
 
 public class RoadSpawner : MonoBehaviour
 {
-    [Header("Prefabs & Settings")] public List<GameObject> roadPrefabs;
-    public float moveSpeed = 5f;
+    [SerializeField] private List<GameObject> roadPrefabs;
 
-    [Header("Spawn Settings")] public float spawnInterval = 2f;
-
-    private float _spawnTimer;
-    private GameObject _lastSpawnedRoad;
-
-
-    private List<GameObject> _activeRoads;
     private float _index;
+    private List<float> _spawnedIndexes;
+    private List<GameObject> _spawnedRoads;
+    private Rigidbody _rb;
 
-    void Start()
+    private void Start()
     {
-        _activeRoads = new List<GameObject>();
+        _rb = GetComponent<Rigidbody>();
+        _spawnedIndexes = new List<float>();
+        _spawnedRoads = new List<GameObject>();
         SpawnInitialRoad();
     }
 
     private void FixedUpdate()
     {
-        _index += 20 * Time.fixedDeltaTime;
-        MoveRoads();
-    }
+        transform.position -= new Vector3(0, 0, 20 * Time.fixedDeltaTime);
+        if (-transform.position.z >= _index)
+        {
+            SpawnRoad();
+            _index += 39.95f;
+        }
 
-    void HandleSpawning()
-    {
+        if (_spawnedRoads.Count <= 3) return;
+        
+        var firstSpawnedRoad = _spawnedRoads[0];
+        Destroy(firstSpawnedRoad);
+        _spawnedRoads.RemoveAt(0);
+        _rb.MovePosition(new Vector3(0, 0, -40));
     }
 
     private void SpawnInitialRoad()
     {
-        var road = Instantiate(GetRandomRoad(), transform.position + new Vector3(0, 0, -40), transform.rotation);
-        _activeRoads.Add(road);
+        var road = Instantiate(GetRandomRoad(), new Vector3(0, 0, 1), transform.rotation, transform);
+        _spawnedRoads.Add(road);
     }
 
     private void SpawnRoad()
     {
-        var road = Instantiate(GetRandomRoad(), transform.position, transform.rotation);
-        _activeRoads.Add(road);
+        var road = Instantiate(GetRandomRoad(), new Vector3(0, 0, 40), transform.rotation, transform);
+        _spawnedRoads.Add(road);
     }
-
-    private void MoveRoads()
-    {
-        _activeRoads.ForEach(road => road.transform.position += Vector3.back * (Time.fixedDeltaTime * moveSpeed));
-    }
-
 
     private GameObject GetRandomRoad()
     {
-        return roadPrefabs[Random.Range(0, roadPrefabs.Count)];
+        var index = Random.Range(0, roadPrefabs.Count);
+        return roadPrefabs[index];
     }
 }
