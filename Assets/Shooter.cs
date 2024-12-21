@@ -1,4 +1,3 @@
-using System.Collections;
 using UnityEngine;
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
@@ -6,8 +5,8 @@ using Cysharp.Threading.Tasks;
 public class Shooter : MonoBehaviour
 {
     private List<Transform> _hitPoints;
-    [SerializeField] private float bulletSpeed = 20f;
-    [SerializeField] private float fireRateBetweenShots = 0.2f;
+    [SerializeField] private float bulletSpeed = 50f;
+    [SerializeField] private float fireRateBetweenShots = 0.1f;
     [SerializeField] private float fireRateBetweenHitPoints;
 
     private float _nextShootTime;
@@ -48,9 +47,9 @@ public class Shooter : MonoBehaviour
 
             var bulletRigidbody = bullet.GetComponent<Rigidbody>();
 
-            bulletRigidbody.linearVelocity = _playerMovement.CurrentVelocity.z > 0
-                ? hitPoint.forward * bulletSpeed + _playerMovement.CurrentVelocity
-                : hitPoint.forward * bulletSpeed;
+            // bulletRigidbody.linearVelocity = hitPoint.forward * bulletSpeed + _playerMovement.CurrentVelocity;
+            bulletRigidbody.linearVelocity = hitPoint.forward * bulletSpeed;
+
             ObjectPoolManager.Instance.ReturnWithDelay(PoolKey.Bullet, bullet, 1f).Forget();
 
             if (fireRateBetweenHitPoints > 0f)

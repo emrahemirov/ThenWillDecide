@@ -1,6 +1,5 @@
 using UnityEngine;
 using System.Collections.Generic;
-using System.Linq;
 using Random = UnityEngine.Random;
 
 public class RoadSpawner : MonoBehaviour
@@ -10,11 +9,9 @@ public class RoadSpawner : MonoBehaviour
     private float _index;
     private List<float> _spawnedIndexes;
     private List<GameObject> _spawnedRoads;
-    private Rigidbody _rb;
 
     private void Start()
     {
-        _rb = GetComponent<Rigidbody>();
         _spawnedIndexes = new List<float>();
         _spawnedRoads = new List<GameObject>();
         SpawnInitialRoad();
@@ -23,18 +20,17 @@ public class RoadSpawner : MonoBehaviour
     private void FixedUpdate()
     {
         transform.position -= new Vector3(0, 0, 20 * Time.fixedDeltaTime);
+
         if (-transform.position.z >= _index)
         {
             SpawnRoad();
-            _index += 39.95f;
+            _index += 39.95f; 
         }
 
         if (_spawnedRoads.Count <= 3) return;
-        
         var firstSpawnedRoad = _spawnedRoads[0];
         Destroy(firstSpawnedRoad);
         _spawnedRoads.RemoveAt(0);
-        _rb.MovePosition(new Vector3(0, 0, -40));
     }
 
     private void SpawnInitialRoad()
