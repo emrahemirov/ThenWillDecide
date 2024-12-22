@@ -4,13 +4,15 @@ using UnityEngine.Serialization;
 
 public class PlayerMovement : MonoBehaviour
 {
-    [SerializeField] private float verticalMoveSpeed = 40f;
-    [SerializeField] private float horizontalMoveSpeed = 20f;
-    [SerializeField] private float escapeFromBorderDelta = 100f;
+    [SerializeField] private float verticalMoveSpeed = 25;
+    [SerializeField] private float horizontalMoveSpeed = 15f;
+    [SerializeField] private float escapeFromBorderDelta = 60f;
     [SerializeField] private float accelerationDelta = 50f;
     [SerializeField] private float decelerationDelta = 40f;
     [SerializeField] private float horizontalOffset = 0.5f;
     [SerializeField] private float verticalOffset = 2.5f;
+
+    [SerializeField] private GameObject playerCase;
 
     private FloatingJoystick _joystick;
 
@@ -25,7 +27,8 @@ public class PlayerMovement : MonoBehaviour
         _isOnLeftBorder,
         _isOnRightBorder;
 
-    private bool _isMovingForward,
+    private bool
+        _isMovingForward,
         _isMovingBack,
         _isMovingLeft,
         _isMovingRight;
@@ -59,15 +62,30 @@ public class PlayerMovement : MonoBehaviour
     private void FixedUpdate()
     {
         MovePosition();
+        RotatePlayerCase();
+    }
+
+    private void RotatePlayerCase()
+    {
+        var targetYRotation = Mathf.Clamp((_input.z >= 0 ? _input.x : -_input.x) * 5, -5, 5);
+        var targetXRotation = Mathf.Clamp(-_input.z * 3, -3, 3);
+        var targetZRotation = Mathf.Clamp((_input.z >= 0 ? _input.x : -_input.x) * 5, -5, 5);
+
+        var targetRotation = Quaternion.Euler(targetXRotation, targetYRotation, targetZRotation);
+        playerCase.transform.rotation =
+            Quaternion.Slerp(playerCase.transform.rotation, targetRotation, Time.fixedDeltaTime * 5f);
     }
 
     private void SetInputVector()
     {
-        _input = new Vector3(_joystick.Horizontal, 0, _joystick.Vertical).normalized;
-        if (_isOnTopBorder && _isMovingForward) _input.z = 0;
-        if (_isOnBottomBorder && _isMovingBack) _input.z = 0;
-        if (_isOnLeftBorder && _isMovingLeft) _input.x = 0;
-        if (_isOnRightBorder && _isMovingRight) _input.x = 0;
+        var newInput = new Vector3(_joystick.Horizontal, 0, _joystick.Vertical);
+
+        if (_isOnTopBorder && newInput.z > 0.5f) newInput.z = 0;
+        if (_isOnBottomBorder && newInput.z < -0.5f) newInput.z = 0;
+        if (_isOnLeftBorder && newInput.x < -0.5f) newInput.x = 0;
+        if (_isOnRightBorder && newInput.x > 0.5f) newInput.x = 0;
+
+        _input = newInput;
     }
 
     private void MovePosition()
@@ -83,7 +101,6 @@ public class PlayerMovement : MonoBehaviour
             IsMoving() ? accelerationDelta : decelerationDelta;
 
         CurrentVelocity = Vector3.MoveTowards(CurrentVelocity, targetVelocity, velocityDelta * Time.fixedDeltaTime);
-
 
         var desiredPosition = transform.position + CurrentVelocity * Time.fixedDeltaTime;
 
@@ -106,10 +123,10 @@ public class PlayerMovement : MonoBehaviour
 
     private void SetIsOnBorders()
     {
-        _isOnTopBorder = Math.Abs(transform.position.z - _topBorder) < 0.1f;
-        _isOnBottomBorder = Math.Abs(transform.position.z - _bottomBorder) < 0.1f;
-        _isOnLeftBorder = Math.Abs(transform.position.x - _leftBorder) < 0.1f;
-        _isOnRightBorder = Math.Abs(transform.position.x - _rightBorder) < 0.1f;
+        _isOnTopBorder = Math.Abs(transform.position.z - _topBorder) < 1f;
+        _isOnBottomBorder = Math.Abs(transform.position.z - _bottomBorder) < 1f;
+        _isOnLeftBorder = Math.Abs(transform.position.x - _leftBorder) < 1f;
+        _isOnRightBorder = Math.Abs(transform.position.x - _rightBorder) < 1f;
     }
 
     private void SetIsMoving()
