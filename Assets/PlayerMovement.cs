@@ -12,12 +12,18 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float horizontalOffset = 0.5f;
     [SerializeField] private float verticalOffset = 2.5f;
 
-    [SerializeField] private GameObject playerCase;
+    [SerializeField] private Transform playerCase;
+
+    [SerializeField] private MeshFilter skidmarkMeshFilter;
+    [SerializeField] private Transform leftBackTireBottom;
+    private Transform roadSpawner;
+    private Mesh mesh;
+    private Vector3[] originalVertices;
 
     private FloatingJoystick _joystick;
 
-    private Vector3 _input;
-    public Vector3 CurrentVelocity { get; private set; }
+    private Vector3 _movementInput;
+    private Vector3 _currentVelocity;
 
     private float _leftBorder, _rightBorder, _topBorder, _bottomBorder;
 
@@ -37,6 +43,7 @@ public class PlayerMovement : MonoBehaviour
     {
         _joystick = FindFirstObjectByType<FloatingJoystick>();
         var planeCollider = GameObject.FindGameObjectWithTag("Ground").GetComponent<Collider>();
+        roadSpawner = GameObject.FindGameObjectWithTag("RoadSpawner").transform;
         var playerCollider = GetComponent<Collider>();
 
         var playerHalfWidth = playerCollider.bounds.extents.x;
@@ -50,10 +57,37 @@ public class PlayerMovement : MonoBehaviour
         _rightBorder = planeColliderBounds.max.x - effectiveHorizontalOffset;
         _bottomBorder = planeColliderBounds.min.z + effectiveVerticalOffset;
         _topBorder = planeColliderBounds.max.z - effectiveVerticalOffset;
+
+        var obj = Instantiate(skidmarkMeshFilter, leftBackTireBottom.position,
+            Quaternion.Euler(0, 5, 0), roadSpawner);
+        mesh = obj.mesh;
+        // Store the original vertices for reference
+        originalVertices = mesh.vertices;
+        var vertices = mesh.vertices;
+        for (var i = 0; i < vertices.Length; i++)
+        {
+            vertices[i].z = 0;
+        }
+
+        mesh.vertices = vertices;
+        mesh.RecalculateBounds();
     }
 
     private void Update()
     {
+        var vertices = mesh.vertices;
+
+
+        for (var i = 0; i < vertices.Length; i++)
+        {
+            if (!(originalVertices[i].z < 0)) continue;
+            vertices[i].z -= 0.7f;
+            vertices[i].z = Mathf.Clamp(vertices[i].z, -5, 0);
+        }
+
+        mesh.vertices = vertices;
+        mesh.RecalculateBounds();
+
         SetInputVector();
         SetIsOnBorders();
         SetIsMoving();
@@ -67,13 +101,13 @@ public class PlayerMovement : MonoBehaviour
 
     private void RotatePlayerCase()
     {
-        var targetYRotation = Mathf.Clamp((_input.z >= 0 ? _input.x : -_input.x) * 5, -5, 5);
-        var targetXRotation = Mathf.Clamp(-_input.z * 3, -3, 3);
-        var targetZRotation = Mathf.Clamp((_input.z >= 0 ? _input.x : -_input.x) * 5, -5, 5);
+        var targetYRotation = Mathf.Clamp((_movementInput.z >= 0 ? _movementInput.x : -_movementInput.x) * 6, -6, 6);
+        var targetXRotation = Mathf.Clamp(-_movementInput.z * 3, -3, 3);
+        var targetZRotation = Mathf.Clamp((_movementInput.z >= 0 ? _movementInput.x : -_movementInput.x) * 5, -5, 5);
 
         var targetRotation = Quaternion.Euler(targetXRotation, targetYRotation, targetZRotation);
-        playerCase.transform.rotation =
-            Quaternion.Slerp(playerCase.transform.rotation, targetRotation, Time.fixedDeltaTime * 5f);
+        playerCase.rotation =
+            Quaternion.Slerp(playerCase.rotation, targetRotation, Time.fixedDeltaTime * 5f);
     }
 
     private void SetInputVector()
@@ -82,27 +116,27 @@ public class PlayerMovement : MonoBehaviour
 
         if (_isOnTopBorder && newInput.z > 0.5f) newInput.z = 0;
         if (_isOnBottomBorder && newInput.z < -0.5f) newInput.z = 0;
-        if (_isOnLeftBorder && newInput.x < -0.5f) newInput.x = 0;
-        if (_isOnRightBorder && newInput.x > 0.5f) newInput.x = 0;
+        if (_isOnLeftBorder && newInput.x < 0) newInput.x = 0;
+        if (_isOnRightBorder && newInput.x > 0) newInput.x = 0;
 
-        _input = newInput;
+        _movementInput = newInput;
     }
 
     private void MovePosition()
     {
         var targetVelocity = new Vector3(
-            _input.x * horizontalMoveSpeed,
+            _movementInput.x * horizontalMoveSpeed,
             0,
-            _input.z * verticalMoveSpeed
+            _movementInput.z * verticalMoveSpeed
         );
 
         var velocityDelta =
             IsEscapingFromBorders() ? escapeFromBorderDelta :
             IsMoving() ? accelerationDelta : decelerationDelta;
 
-        CurrentVelocity = Vector3.MoveTowards(CurrentVelocity, targetVelocity, velocityDelta * Time.fixedDeltaTime);
+        _currentVelocity = Vector3.MoveTowards(_currentVelocity, targetVelocity, velocityDelta * Time.fixedDeltaTime);
 
-        var desiredPosition = transform.position + CurrentVelocity * Time.fixedDeltaTime;
+        var desiredPosition = transform.position + _currentVelocity * Time.fixedDeltaTime;
 
         var clampedX = Mathf.Clamp(desiredPosition.x, _leftBorder, _rightBorder);
         var clampedZ = Mathf.Clamp(desiredPosition.z, _bottomBorder, _topBorder);
@@ -131,9 +165,9 @@ public class PlayerMovement : MonoBehaviour
 
     private void SetIsMoving()
     {
-        _isMovingForward = _input.z > 0.5f;
-        _isMovingBack = _input.z < -0.5f;
-        _isMovingLeft = _input.x < -0.5f;
-        _isMovingRight = _input.x > 0.5f;
+        _isMovingForward = _movementInput.z > 0.5f;
+        _isMovingBack = _movementInput.z < -0.5f;
+        _isMovingLeft = _movementInput.x < 0;
+        _isMovingRight = _movementInput.x > 0;
     }
 }

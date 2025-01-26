@@ -20,11 +20,11 @@ public class RoadSpawner : MonoBehaviour
     private void FixedUpdate()
     {
         transform.position -= new Vector3(0, 0, 20 * Time.fixedDeltaTime);
-
+        
         if (-transform.position.z >= _index)
         {
             SpawnRoad();
-            _index += 39.95f; 
+            _index += 40 - (3 * Time.fixedDeltaTime);
         }
 
         if (_spawnedRoads.Count <= 3) return;
