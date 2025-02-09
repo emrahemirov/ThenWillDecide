@@ -209,6 +209,7 @@ GameObject:
   - component: {fileID: 270111437}
   - component: {fileID: 270111440}
   - component: {fileID: 270111438}
+  - component: {fileID: 270111441}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -256,9 +257,6 @@ MonoBehaviour:
   horizontalOffset: 0.5
   verticalOffset: 2.5
   playerCase: {fileID: 4508285778127806}
-  skidMark: {fileID: 1280968295932724033, guid: a4f684fae5468754e9f79dd0838d7567, type: 3}
-  leftRearTireBottom: {fileID: 2138343786}
-  rightRearTireBottom: {fileID: 2065675716}
 --- !u!65 &270111440
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -280,6 +278,21 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1.5, y: 1, z: 3.82}
   m_Center: {x: 0, y: 0.24, z: 0.12}
+--- !u!114 &270111441
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 270111433}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 651000a39fd9d6f4ab23b136c6b56d77, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  skidMarkLieLineRenderer: {fileID: 1280968295932724033, guid: a4f684fae5468754e9f79dd0838d7567, type: 3}
+  leftRearTireBottom: {fileID: 2138343786}
+  rightRearTireBottom: {fileID: 2065675716}
 --- !u!1 &452291528
 GameObject:
   m_ObjectHideFlags: 0
