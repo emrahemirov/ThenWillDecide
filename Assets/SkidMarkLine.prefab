@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 8660486510063911131}
   - component: {fileID: 1280968295932724033}
   m_Layer: 0
-  m_Name: Line
+  m_Name: SkidMarkLine
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

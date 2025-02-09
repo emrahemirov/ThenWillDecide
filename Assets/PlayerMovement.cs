@@ -15,16 +15,10 @@ public class PlayerMovement : MonoBehaviour
 
     [SerializeField] private Transform playerCase;
 
-    [SerializeField] private LineRenderer skidMark;
-    [SerializeField] private Transform leftRearTireBottom;
-    [SerializeField] private Transform rightRearTireBottom;
-    private Transform roadSpawner;
-    private Vector3[] originalVertices;
-
     private FloatingJoystick _joystick;
 
-    private Vector3 _movementInput;
-    private Vector3 _currentVelocity;
+    public Vector3 MovementInput { get; private set; }
+    public Vector3 CurrentVelocity { get; private set; }
 
     private float _leftBorder, _rightBorder, _topBorder, _bottomBorder;
 
@@ -44,7 +38,6 @@ public class PlayerMovement : MonoBehaviour
     {
         _joystick = FindFirstObjectByType<FloatingJoystick>();
         var planeCollider = GameObject.FindGameObjectWithTag("Ground").GetComponent<Collider>();
-        roadSpawner = GameObject.FindGameObjectWithTag("RoadSpawner").transform;
         var playerCollider = GetComponent<Collider>();
 
         var playerHalfWidth = playerCollider.bounds.extents.x;
@@ -67,50 +60,6 @@ public class PlayerMovement : MonoBehaviour
         SetInputVector();
         SetIsOnBorders();
         SetIsMoving();
-
-        VelocityChange();
-    }
-
-    private Vector3 _prevVelocity;
-
-    private void VelocityChange()
-    {
-        var isTurningRight = _currentVelocity.x > 0 && _prevVelocity.x <= 0;
-        var isTurningLeft = _currentVelocity.x < 0 && _prevVelocity.x >= 0;
-        var isTurning = isTurningRight || isTurningLeft;
-
-        if (isTurning && Math.Abs(_movementInput.x) > 0.8f)
-        {
-            if (isTurningRight) IncreaseSkidMarkLength(leftRearTireBottom, _movementInput.z >= 0 ? 5 : -5);
-            if (isTurningLeft) IncreaseSkidMarkLength(rightRearTireBottom, _movementInput.z >= 0 ? -5 : 5);
-        }
-
-        _prevVelocity = _currentVelocity;
-    }
-
-
-    private async void IncreaseSkidMarkLength(Transform tire, float rotateY)
-    {
-        const float targetScaleZ = -1.5f;
-        const float duration = 0.1f;
-        var lineRenderer = Instantiate(skidMark, tire.position,
-            Quaternion.Euler(0, rotateY, 0), tire);
-        lineRenderer.positionCount = 2;
-        lineRenderer.SetPosition(1, new Vector3(0, 0, 0));
-
-        var timeElapsed = 0f;
-
-        while (timeElapsed < duration)
-        {
-            var newScaleZ = Mathf.Lerp(0, targetScaleZ, timeElapsed / duration);
-
-            lineRenderer.SetPosition(1, new Vector3(0, 0, newScaleZ));
-
-            timeElapsed += Time.deltaTime;
-            await UniTask.Yield();
-        }
-
-        lineRenderer.transform.parent = roadSpawner;
     }
 
 
@@ -122,9 +71,9 @@ public class PlayerMovement : MonoBehaviour
 
     private void RotatePlayerCase()
     {
-        var targetYRotation = Mathf.Clamp((_movementInput.z >= 0 ? _movementInput.x : -_movementInput.x) * 6, -6, 6);
-        var targetXRotation = Mathf.Clamp(-_movementInput.z * 3, -3, 3);
-        var targetZRotation = Mathf.Clamp((_movementInput.z >= 0 ? _movementInput.x : -_movementInput.x) * 5, -5, 5);
+        var targetYRotation = Mathf.Clamp((MovementInput.z >= 0 ? MovementInput.x : -MovementInput.x) * 6, -6, 6);
+        var targetXRotation = Mathf.Clamp(-MovementInput.z * 3, -3, 3);
+        var targetZRotation = Mathf.Clamp((MovementInput.z >= 0 ? MovementInput.x : -MovementInput.x) * 5, -5, 5);
 
         var targetRotation = Quaternion.Euler(targetXRotation, targetYRotation, targetZRotation);
         playerCase.rotation =
@@ -140,24 +89,24 @@ public class PlayerMovement : MonoBehaviour
         if (_isOnLeftBorder && newInput.x < 0) newInput.x = 0;
         if (_isOnRightBorder && newInput.x > 0) newInput.x = 0;
 
-        _movementInput = newInput;
+        MovementInput = newInput;
     }
 
     private void MovePosition()
     {
         var targetVelocity = new Vector3(
-            _movementInput.x * horizontalMoveSpeed,
+            MovementInput.x * horizontalMoveSpeed,
             0,
-            _movementInput.z * verticalMoveSpeed
+            MovementInput.z * verticalMoveSpeed
         );
 
         var velocityDelta =
             IsEscapingFromBorders() ? escapeFromBorderDelta :
             IsMoving() ? accelerationDelta : decelerationDelta;
 
-        _currentVelocity = Vector3.MoveTowards(_currentVelocity, targetVelocity, velocityDelta * Time.fixedDeltaTime);
+        CurrentVelocity = Vector3.MoveTowards(CurrentVelocity, targetVelocity, velocityDelta * Time.fixedDeltaTime);
 
-        var desiredPosition = transform.position + _currentVelocity * Time.fixedDeltaTime;
+        var desiredPosition = transform.position + CurrentVelocity * Time.fixedDeltaTime;
 
         var clampedX = Mathf.Clamp(desiredPosition.x, _leftBorder, _rightBorder);
         var clampedZ = Mathf.Clamp(desiredPosition.z, _bottomBorder, _topBorder);
@@ -186,9 +135,9 @@ public class PlayerMovement : MonoBehaviour
 
     private void SetIsMoving()
     {
-        _isMovingForward = _movementInput.z > 0.5f;
-        _isMovingBack = _movementInput.z < -0.5f;
-        _isMovingLeft = _movementInput.x < 0;
-        _isMovingRight = _movementInput.x > 0;
+        _isMovingForward = MovementInput.z > 0.5f;
+        _isMovingBack = MovementInput.z < -0.5f;
+        _isMovingLeft = MovementInput.x < 0;
+        _isMovingRight = MovementInput.x > 0;
     }
 }
