@@ -1,23 +1,24 @@
 using System;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Serialization;
 
 public class PlayerMovement : MonoBehaviour
 {
     [SerializeField] private float verticalMoveSpeed = 25;
-    [SerializeField] private float horizontalMoveSpeed = 15f;
-    [SerializeField] private float escapeFromBorderDelta = 60f;
-    [SerializeField] private float accelerationDelta = 50f;
-    [SerializeField] private float decelerationDelta = 40f;
+    [SerializeField] private float horizontalMoveSpeed = 15;
+    [SerializeField] private float escapeFromBorderDelta = 60;
+    [SerializeField] private float accelerationDelta = 50;
+    [SerializeField] private float decelerationDelta = 40;
     [SerializeField] private float horizontalOffset = 0.5f;
     [SerializeField] private float verticalOffset = 2.5f;
 
     [SerializeField] private Transform playerCase;
 
-    [SerializeField] private MeshFilter skidmarkMeshFilter;
-    [SerializeField] private Transform leftBackTireBottom;
+    [SerializeField] private LineRenderer skidMark;
+    [SerializeField] private Transform leftRearTireBottom;
+    [SerializeField] private Transform rightRearTireBottom;
     private Transform roadSpawner;
-    private Mesh mesh;
     private Vector3[] originalVertices;
 
     private FloatingJoystick _joystick;
@@ -57,41 +58,61 @@ public class PlayerMovement : MonoBehaviour
         _rightBorder = planeColliderBounds.max.x - effectiveHorizontalOffset;
         _bottomBorder = planeColliderBounds.min.z + effectiveVerticalOffset;
         _topBorder = planeColliderBounds.max.z - effectiveVerticalOffset;
-
-        var obj = Instantiate(skidmarkMeshFilter, leftBackTireBottom.position,
-            Quaternion.Euler(0, 5, 0), roadSpawner);
-        mesh = obj.mesh;
-        // Store the original vertices for reference
-        originalVertices = mesh.vertices;
-        var vertices = mesh.vertices;
-        for (var i = 0; i < vertices.Length; i++)
-        {
-            vertices[i].z = 0;
-        }
-
-        mesh.vertices = vertices;
-        mesh.RecalculateBounds();
     }
+
+    private float maxVel, minVel;
 
     private void Update()
     {
-        var vertices = mesh.vertices;
-
-
-        for (var i = 0; i < vertices.Length; i++)
-        {
-            if (!(originalVertices[i].z < 0)) continue;
-            vertices[i].z -= 0.7f;
-            vertices[i].z = Mathf.Clamp(vertices[i].z, -5, 0);
-        }
-
-        mesh.vertices = vertices;
-        mesh.RecalculateBounds();
-
         SetInputVector();
         SetIsOnBorders();
         SetIsMoving();
+
+        VelocityChange();
     }
+
+    private Vector3 _prevVelocity;
+
+    private void VelocityChange()
+    {
+        var isTurningRight = _currentVelocity.x > 0 && _prevVelocity.x <= 0;
+        var isTurningLeft = _currentVelocity.x < 0 && _prevVelocity.x >= 0;
+        var isTurning = isTurningRight || isTurningLeft;
+
+        if (isTurning && Math.Abs(_movementInput.x) > 0.8f)
+        {
+            if (isTurningRight) IncreaseSkidMarkLength(leftRearTireBottom, _movementInput.z >= 0 ? 5 : -5);
+            if (isTurningLeft) IncreaseSkidMarkLength(rightRearTireBottom, _movementInput.z >= 0 ? -5 : 5);
+        }
+
+        _prevVelocity = _currentVelocity;
+    }
+
+
+    private async void IncreaseSkidMarkLength(Transform tire, float rotateY)
+    {
+        const float targetScaleZ = -1.5f;
+        const float duration = 0.1f;
+        var lineRenderer = Instantiate(skidMark, tire.position,
+            Quaternion.Euler(0, rotateY, 0), tire);
+        lineRenderer.positionCount = 2;
+        lineRenderer.SetPosition(1, new Vector3(0, 0, 0));
+
+        var timeElapsed = 0f;
+
+        while (timeElapsed < duration)
+        {
+            var newScaleZ = Mathf.Lerp(0, targetScaleZ, timeElapsed / duration);
+
+            lineRenderer.SetPosition(1, new Vector3(0, 0, newScaleZ));
+
+            timeElapsed += Time.deltaTime;
+            await UniTask.Yield();
+        }
+
+        lineRenderer.transform.parent = roadSpawner;
+    }
+
 
     private void FixedUpdate()
     {
@@ -157,10 +178,10 @@ public class PlayerMovement : MonoBehaviour
 
     private void SetIsOnBorders()
     {
-        _isOnTopBorder = Math.Abs(transform.position.z - _topBorder) < 1f;
-        _isOnBottomBorder = Math.Abs(transform.position.z - _bottomBorder) < 1f;
-        _isOnLeftBorder = Math.Abs(transform.position.x - _leftBorder) < 1f;
-        _isOnRightBorder = Math.Abs(transform.position.x - _rightBorder) < 1f;
+        _isOnTopBorder = Math.Abs(transform.position.z - _topBorder) < 1;
+        _isOnBottomBorder = Math.Abs(transform.position.z - _bottomBorder) < 1;
+        _isOnLeftBorder = Math.Abs(transform.position.x - _leftBorder) < 1;
+        _isOnRightBorder = Math.Abs(transform.position.x - _rightBorder) < 1;
     }
 
     private void SetIsMoving()

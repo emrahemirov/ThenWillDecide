@@ -225,11 +225,12 @@ Transform:
   m_GameObject: {fileID: 270111433}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.5, z: -5.54}
+  m_LocalPosition: {x: -2.54, y: 0.5, z: -5.54}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 2138343786}
+  - {fileID: 2065675716}
   - {fileID: 1411912011}
   - {fileID: 948662816278630830}
   - {fileID: 4508285778127806}
@@ -255,8 +256,9 @@ MonoBehaviour:
   horizontalOffset: 0.5
   verticalOffset: 2.5
   playerCase: {fileID: 4508285778127806}
-  skidmarkMeshFilter: {fileID: 7730034584861271634, guid: 44890a0665d174749bf99bd8ee32c3cc, type: 3}
-  leftBackTireBottom: {fileID: 2138343786}
+  skidMark: {fileID: 1280968295932724033, guid: a4f684fae5468754e9f79dd0838d7567, type: 3}
+  leftRearTireBottom: {fileID: 2138343786}
+  rightRearTireBottom: {fileID: 2065675716}
 --- !u!65 &270111440
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -397,7 +399,7 @@ Transform:
   m_GameObject: {fileID: 478403085}
   serializedVersion: 2
   m_LocalRotation: {x: 0.5, y: 0, z: 0, w: 0.8660254}
-  m_LocalPosition: {x: 0, y: 9.160254, z: -10.54}
+  m_LocalPosition: {x: -2.54, y: 9.160254, z: -10.54}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -660,7 +662,7 @@ Transform:
   m_GameObject: {fileID: 886832045}
   serializedVersion: 2
   m_LocalRotation: {x: 0.5, y: 0, z: 0, w: 0.8660254}
-  m_LocalPosition: {x: 0, y: 21.8, z: -18.1}
+  m_LocalPosition: {x: -2.54, y: 21.8, z: -18.1}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1057,6 +1059,37 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &2065675715
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2065675716}
+  m_Layer: 0
+  m_Name: RightRearTireBottom
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2065675716
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2065675715}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: 0.043619405, z: -0, w: 0.9990483}
+  m_LocalPosition: {x: 0.75, y: -0.49, z: -1.25}
+  m_LocalScale: {x: 1, y: 0, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 270111437}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2138343785
 GameObject:
   m_ObjectHideFlags: 0
@@ -1067,7 +1100,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2138343786}
   m_Layer: 0
-  m_Name: LeftBackTireBottom
+  m_Name: LeftRearTireBottom
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1082,8 +1115,8 @@ Transform:
   m_GameObject: {fileID: 2138343785}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.043619405, z: -0, w: 0.9990483}
-  m_LocalPosition: {x: -0.754, y: -0.49400002, z: -1.2329998}
-  m_LocalScale: {x: 0.025282044, y: 0, z: 0.19954425}
+  m_LocalPosition: {x: -0.763, y: -0.47, z: -1.399}
+  m_LocalScale: {x: 1, y: 0, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 270111437}
