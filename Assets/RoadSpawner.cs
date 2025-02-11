@@ -17,14 +17,14 @@ public class RoadSpawner : MonoBehaviour
         SpawnInitialRoad();
     }
 
-    private void FixedUpdate()
+    private void Update()
     {
-        transform.position -= new Vector3(0, 0, 20 * Time.fixedDeltaTime);
+        transform.position -= new Vector3(0, 0, 20 * Time.deltaTime);
         
         if (-transform.position.z >= _index)
         {
             SpawnRoad();
-            _index += 40 - (3 * Time.fixedDeltaTime);
+            _index += 40 - (3 * Time.deltaTime);
         }
 
         if (_spawnedRoads.Count <= 3) return;

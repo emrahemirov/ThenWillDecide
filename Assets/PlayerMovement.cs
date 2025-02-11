@@ -19,20 +19,14 @@ public class PlayerMovement : MonoBehaviour
 
     public Vector3 MovementInput { get; private set; }
     public Vector3 CurrentVelocity { get; private set; }
+    public bool IsMovingForward { get; private set; }
+    public bool IsMovingBackward { get; private set; }
 
     private float _leftBorder, _rightBorder, _topBorder, _bottomBorder;
 
-    private bool
-        _isOnTopBorder,
-        _isOnBottomBorder,
-        _isOnLeftBorder,
-        _isOnRightBorder;
+    private bool _isOnTopBorder, _isOnBottomBorder, _isOnLeftBorder, _isOnRightBorder;
 
-    private bool
-        _isMovingForward,
-        _isMovingBack,
-        _isMovingLeft,
-        _isMovingRight;
+    private bool _isMovingLeft, _isMovingRight;
 
     private void Start()
     {
@@ -53,18 +47,11 @@ public class PlayerMovement : MonoBehaviour
         _topBorder = planeColliderBounds.max.z - effectiveVerticalOffset;
     }
 
-    private float maxVel, minVel;
-
     private void Update()
     {
         SetInputVector();
         SetIsOnBorders();
         SetIsMoving();
-    }
-
-
-    private void FixedUpdate()
-    {
         MovePosition();
         RotatePlayerCase();
     }
@@ -77,12 +64,12 @@ public class PlayerMovement : MonoBehaviour
 
         var targetRotation = Quaternion.Euler(targetXRotation, targetYRotation, targetZRotation);
         playerCase.rotation =
-            Quaternion.Slerp(playerCase.rotation, targetRotation, Time.fixedDeltaTime * 5f);
+            Quaternion.Slerp(playerCase.rotation, targetRotation, Time.deltaTime * 5f);
     }
 
     private void SetInputVector()
     {
-        var newInput = new Vector3(_joystick.Horizontal, 0, _joystick.Vertical);
+        var newInput = new Vector3(Input.GetAxis("Horizontal"), 0, _joystick.Vertical);
 
         if (_isOnTopBorder && newInput.z > 0.5f) newInput.z = 0;
         if (_isOnBottomBorder && newInput.z < -0.5f) newInput.z = 0;
@@ -104,9 +91,9 @@ public class PlayerMovement : MonoBehaviour
             IsEscapingFromBorders() ? escapeFromBorderDelta :
             IsMoving() ? accelerationDelta : decelerationDelta;
 
-        CurrentVelocity = Vector3.MoveTowards(CurrentVelocity, targetVelocity, velocityDelta * Time.fixedDeltaTime);
+        CurrentVelocity = Vector3.MoveTowards(CurrentVelocity, targetVelocity, velocityDelta * Time.deltaTime);
 
-        var desiredPosition = transform.position + CurrentVelocity * Time.fixedDeltaTime;
+        var desiredPosition = transform.position + CurrentVelocity * Time.deltaTime;
 
         var clampedX = Mathf.Clamp(desiredPosition.x, _leftBorder, _rightBorder);
         var clampedZ = Mathf.Clamp(desiredPosition.z, _bottomBorder, _topBorder);
@@ -116,12 +103,12 @@ public class PlayerMovement : MonoBehaviour
 
     private bool IsMoving()
     {
-        return _isMovingForward || _isMovingBack || _isMovingLeft || _isMovingRight;
+        return IsMovingForward || IsMovingBackward || _isMovingLeft || _isMovingRight;
     }
 
     private bool IsEscapingFromBorders()
     {
-        return _isOnTopBorder && _isMovingBack || _isOnBottomBorder && _isMovingForward ||
+        return _isOnTopBorder && IsMovingBackward || _isOnBottomBorder && IsMovingForward ||
                _isOnLeftBorder && _isMovingRight || _isOnRightBorder && _isMovingLeft;
     }
 
@@ -135,8 +122,8 @@ public class PlayerMovement : MonoBehaviour
 
     private void SetIsMoving()
     {
-        _isMovingForward = MovementInput.z > 0.5f;
-        _isMovingBack = MovementInput.z < -0.5f;
+        IsMovingForward = MovementInput.z > 0.5f;
+        IsMovingBackward = MovementInput.z < -0.5f;
         _isMovingLeft = MovementInput.x < 0;
         _isMovingRight = MovementInput.x > 0;
     }

@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Text;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -9,10 +11,10 @@ public class SkidMarkController : MonoBehaviour
     [SerializeField] private Transform leftRearTireBottom;
     [SerializeField] private Transform rightRearTireBottom;
 
-
     private Transform roadSpawner;
     private PlayerMovement playerMovement;
-    private Vector3 _prevVelocity;
+    private float _prevVelocityX;
+    private float _prevVelocityZ;
 
     private void Start()
     {
@@ -20,50 +22,49 @@ public class SkidMarkController : MonoBehaviour
         playerMovement = GetComponent<PlayerMovement>();
     }
 
-    private void FixedUpdate()
+    private void Update()
     {
-        VelocityChange();
+        ShowSkidMarksOnLaneChange();
     }
 
 
-    private void VelocityChange()
+    private void ShowSkidMarksOnLaneChange()
     {
-        var isTurningRight = playerMovement.CurrentVelocity.x > 0 && _prevVelocity.x <= 0;
-        var isTurningLeft = playerMovement.CurrentVelocity.x < 0 && _prevVelocity.x >= 0;
+        var isTurningRight = playerMovement.CurrentVelocity.x > 0 && _prevVelocityX <= 0;
+        var isTurningLeft = playerMovement.CurrentVelocity.x < 0 && _prevVelocityX >= 0;
+        var isTurning = isTurningRight || isTurningLeft;
 
-        if ((isTurningRight || isTurningLeft) && Math.Abs(playerMovement.MovementInput.x) > 0.9f)
+        if (!playerMovement.IsMovingBackward && isTurning && Math.Abs(playerMovement.MovementInput.x) > 0.9f)
         {
             if (isTurningRight)
-                IncreaseSkidMarkLength(leftRearTireBottom, playerMovement.MovementInput.z >= 0 ? 5 : -5);
+                DrawSkidMark(leftRearTireBottom).Forget();
             if (isTurningLeft)
-                IncreaseSkidMarkLength(rightRearTireBottom, playerMovement.MovementInput.z >= 0 ? -5 : 5);
+                DrawSkidMark(rightRearTireBottom).Forget();
         }
 
-        _prevVelocity = playerMovement.CurrentVelocity;
+        _prevVelocityX = playerMovement.CurrentVelocity.x;
     }
 
-
-    private async void IncreaseSkidMarkLength(Transform tire, float rotateY)
+    private async UniTaskVoid DrawSkidMark(Transform tire, float duration = 0.1f)
     {
-        const float targetScaleZ = -1.5f;
-        const float duration = 0.1f;
-        var lineRenderer = Instantiate(skidMarkLieLineRenderer, tire.position,
-            Quaternion.Euler(0, rotateY, 0), tire);
-        lineRenderer.positionCount = 2;
-        lineRenderer.SetPosition(1, new Vector3(0, 0, 0));
+        var lineRenderer = Instantiate(skidMarkLieLineRenderer, roadSpawner, true);
+        var points = new List<Vector3>();
 
-        var timeElapsed = 0f;
-
-        while (timeElapsed < duration)
+        var elapsedTime = 0f;
+        var zed = tire.position.z;
+        while (elapsedTime < duration)
         {
-            var newScaleZ = Mathf.Lerp(0, targetScaleZ, timeElapsed / duration);
+            zed += 20f * Time.deltaTime;
+            Vector3 newPoint = new Vector3(tire.position.x, tire.position.y, zed);
+            if (points.Count == 0 || Vector3.Distance(points[^1], newPoint) > 0.1f)
+            {
+                points.Add(newPoint);
+                lineRenderer.positionCount = points.Count;
+                lineRenderer.SetPositions(points.ToArray());
+            }
 
-            lineRenderer.SetPosition(1, new Vector3(0, 0, newScaleZ));
-
-            timeElapsed += Time.deltaTime;
+            elapsedTime += Time.deltaTime;
             await UniTask.Yield();
         }
-
-        lineRenderer.transform.parent = roadSpawner;
     }
 }
