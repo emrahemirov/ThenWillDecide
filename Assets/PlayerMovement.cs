@@ -13,14 +13,14 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float horizontalOffset = 0.5f;
     [SerializeField] private float verticalOffset = 2.5f;
 
-    [SerializeField] private Transform playerCase;
+    [SerializeField] private Transform carCase;
 
     private FloatingJoystick _joystick;
 
     public Vector3 MovementInput { get; private set; }
     public Vector3 CurrentVelocity { get; private set; }
-    public bool IsMovingForward { get; private set; }
-    public bool IsMovingBackward { get; private set; }
+    public bool IsMovingForwards { get; private set; }
+    public bool IsMovingBackwards { get; private set; }
 
     private float _leftBorder, _rightBorder, _topBorder, _bottomBorder;
 
@@ -63,13 +63,13 @@ public class PlayerMovement : MonoBehaviour
         var targetZRotation = Mathf.Clamp((MovementInput.z >= 0 ? MovementInput.x : -MovementInput.x) * 5, -5, 5);
 
         var targetRotation = Quaternion.Euler(targetXRotation, targetYRotation, targetZRotation);
-        playerCase.rotation =
-            Quaternion.Slerp(playerCase.rotation, targetRotation, Time.deltaTime * 5f);
+        carCase.rotation =
+            Quaternion.Slerp(carCase.rotation, targetRotation, Time.deltaTime * 5f);
     }
 
     private void SetInputVector()
     {
-        var newInput = new Vector3(Input.GetAxis("Horizontal"), 0, _joystick.Vertical);
+        var newInput = new Vector3(_joystick.Horizontal, 0, _joystick.Vertical);
 
         if (_isOnTopBorder && newInput.z > 0.5f) newInput.z = 0;
         if (_isOnBottomBorder && newInput.z < -0.5f) newInput.z = 0;
@@ -103,12 +103,12 @@ public class PlayerMovement : MonoBehaviour
 
     private bool IsMoving()
     {
-        return IsMovingForward || IsMovingBackward || _isMovingLeft || _isMovingRight;
+        return IsMovingForwards || IsMovingBackwards || _isMovingLeft || _isMovingRight;
     }
 
     private bool IsEscapingFromBorders()
     {
-        return _isOnTopBorder && IsMovingBackward || _isOnBottomBorder && IsMovingForward ||
+        return _isOnTopBorder && IsMovingBackwards || _isOnBottomBorder && IsMovingForwards ||
                _isOnLeftBorder && _isMovingRight || _isOnRightBorder && _isMovingLeft;
     }
 
@@ -122,8 +122,8 @@ public class PlayerMovement : MonoBehaviour
 
     private void SetIsMoving()
     {
-        IsMovingForward = MovementInput.z > 0.5f;
-        IsMovingBackward = MovementInput.z < -0.5f;
+        IsMovingForwards = MovementInput.z > 0.5f;
+        IsMovingBackwards = MovementInput.z < -0.5f;
         _isMovingLeft = MovementInput.x < 0;
         _isMovingRight = MovementInput.x > 0;
     }
